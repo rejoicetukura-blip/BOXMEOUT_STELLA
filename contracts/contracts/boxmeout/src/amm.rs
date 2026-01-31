@@ -3,8 +3,6 @@
 
 use soroban_sdk::{contract, contractimpl, token, Address, BytesN, Env, Symbol};
 
-use boxmeout::{amm, helpers::*};
-
 // Storage keys
 const ADMIN_KEY: &str = "admin";
 const FACTORY_KEY: &str = "factory";
@@ -94,12 +92,7 @@ impl AMM {
     }
 
     /// Create new liquidity pool for market
-    pub fn create_pool(
-        env: Env,
-        creator: Address,
-        market_id: BytesN<32>,
-        initial_liquidity: u128,
-    ) {
+    pub fn create_pool(env: Env, creator: Address, market_id: BytesN<32>, initial_liquidity: u128) {
         // Require creator auth to transfer USDC
         creator.require_auth();
 
@@ -141,9 +134,7 @@ impl AMM {
         // Mint LP tokens to creator (equal to initial_liquidity for first LP)
         let lp_tokens = initial_liquidity;
         env.storage().persistent().set(&lp_supply_key, &lp_tokens);
-        env.storage()
-            .persistent()
-            .set(&lp_balance_key, &lp_tokens);
+        env.storage().persistent().set(&lp_balance_key, &lp_tokens);
 
         // Transfer USDC from creator to contract
         let usdc_token: Address = env
@@ -282,11 +273,7 @@ impl AMM {
             .expect("usdc token not set");
 
         let token_client = token::Client::new(&env, &usdc_token);
-        token_client.transfer(
-            &buyer,
-            &env.current_contract_address(),
-            &(amount as i128),
-        );
+        token_client.transfer(&buyer, &env.current_contract_address(), &(amount as i128));
 
         // Update User Shares Balance
         let user_share_key = (
@@ -303,14 +290,7 @@ impl AMM {
         // Record trade (Optional: Simplified to event only for this resolution)
         env.events().publish(
             (Symbol::new(&env, "buy_shares"),),
-            (
-                buyer,
-                market_id,
-                outcome,
-                shares_out,
-                amount,
-                fee_amount,
-            ),
+            (buyer, market_id, outcome, shares_out, amount, fee_amount),
         );
 
         shares_out
@@ -665,13 +645,7 @@ impl AMM {
         let (yes_odds, no_odds) = Self::get_odds(env.clone(), market_id);
 
         // Return: (yes_reserve, no_reserve, total_liquidity, yes_odds, no_odds)
-        (
-            yes_reserve,
-            no_reserve,
-            total_liquidity,
-            yes_odds,
-            no_odds,
-        )
+        (yes_reserve, no_reserve, total_liquidity, yes_odds, no_odds)
     }
 
     // TODO: Implement remaining AMM functions
